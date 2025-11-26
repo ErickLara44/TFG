@@ -3,7 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Archivos generados y datasets pesados
-data/
+
 outputs/
 catboost_info/
 effis_fires_mayor30ha.geojson
@@ -11,7 +11,7 @@ fires_10days.gif
 iberfire_grid_1km.geojson
 is_fire_spain_30ha_2018_2024.geojson
 data/IberFire.nc
-Final_dataset/
+data/Final_dataset/
 
 # Entornos locales
 .venv/
