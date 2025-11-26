@@ -1,0 +1,30 @@
+name: IberFire
+channels:
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+  - https://repo.anaconda.com/pkgs/msys2
+dependencies:
+  - black
+  - flake8
+  - ipython
+  - isort
+  - jupyterlab
+  - loguru
+  - matplotlib
+  - notebook
+  - numpy
+  - pandas
+  - pip
+  - python=3.12
+  - scikit-learn
+  - tqdm
+  - typer
+  - xarray
+  - cartopy
+  - contextily
+  - geopandas
+  - rasterio
+  - pip:
+    - python-dotenv
+    - mkdocs
+    - -e .

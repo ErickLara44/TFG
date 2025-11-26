@@ -1,0 +1,97 @@
+# Language-specific ignores (Python)
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+
+# Node.js (if any)
+node_modules/
+npm-debug.log
+yarn-debug.log
+
+# Go (if any)
+/vendor/
+*.test
+.go-cache/
+
+# Java (if any)
+target/
+*.class
+.gradle/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build outputs and temp files
+dist/
+build/
+out/
+tmp/
+temp/
+*.tmp
+
+# Test files and debug logs
+test/
+tests/
+debug/
+*.log
+
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Environment and secrets
+.env*
+*.env
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+.local/
+local/
+
+# Documentation and markdown
+README*
+*.md
+docs/
+
+# Docker files
+Dockerfile*
+docker-compose*
+
+# macOS system files
+.DS_Store
+
+# Project-specific: large data, outputs, reports, notebooks
+# Ignore all data except code and configs
+outputs/
+data/
+notebooks/
+reports/
+
+# Ignore model checkpoints and raster files
+*.pkl
+*.tif
+
+# Ignore empty utility directory
+utils/
+
+# Ignore any hidden files at root
+.*
+
+# Do not ignore source code and configuration files
+!src/
+!main.py
+!pyproject.toml
+!setup.cfg
+!environment.yml
+!environment_from_history.yml
+!models/
+!LICENSE

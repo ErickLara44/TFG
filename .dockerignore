@@ -1,0 +1,107 @@
+# =====================
+# Python-specific ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# =====================
+# Jupyter Notebooks
+*.ipynb_checkpoints/
+
+# =====================
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+*.orig
+
+# =====================
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# =====================
+# Environment and secrets
+.venv/
+.env*
+*.env
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+
+# =====================
+# Build, dist, and output directories
+build/
+dist/
+out/
+tmp/
+temp/
+*.tmp
+
+# =====================
+# Node.js (if any)
+node_modules/
+npm-debug.log
+yarn-debug.log
+
+# =====================
+# Go (if any)
+/vendor/
+*.test
+.go-cache/
+
+# =====================
+# Java (if any)
+target/
+*.class
+.gradle/
+
+# =====================
+# Documentation and markdown
+README*
+*.md
+docs/
+
+# =====================
+# Docker and Compose files
+Dockerfile*
+docker-compose*
+
+# =====================
+# Project-specific: Data, outputs, reports, notebooks
+# Large data and output files
+/data/
+/outputs/
+/reports/
+/notebooks/
+
+# =====================
+# macOS and system files
+.DS_Store
+
+# =====================
+# Miscellaneous
+*.log
+
+# =====================
+# Keep necessary config and source files
+!src/
+!main.py
+!pyproject.toml
+!setup.cfg
+!environment.yml
+!environment_from_history.yml
+!LICENSE
