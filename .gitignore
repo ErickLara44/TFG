@@ -12,9 +12,31 @@ iberfire_grid_1km.geojson
 is_fire_spain_30ha_2018_2024.geojson
 data/IberFire.nc
 data/Final_dataset/
+data/FinalDataset.csv
+data/datacube_static.nc
+*.nc
 
 # Entornos locales
 .venv/
 venv/
 .env
 
+# Pesados y Modelos (NO SUBIR)
+data/processed/
+models/
+outputs_spread/
+*.png
+*.pth
+*.pkl
+
+# Scripts throwaway / depuracion en raiz
+/debug_*.py
+/verify_*.py
+/test_historical_benchmark.py
+/test_ig_features.py
+/test_spread.py
+/inspect_thresholds.py
+
+# Notas personales y config de editor
+/hacer nuevo.md
+pyrightconfig.json

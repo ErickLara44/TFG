@@ -1,0 +1,17 @@
+# Diario de Desarrollo Arquitectónico: Swin V2 3D y el "Shortcut Learning"
+
+Este documento rastrea los descubrimientos empíricos, fallos arquitectónicos y comportamientos inesperados (Plot Twists) que el modelo Swin Transformer V2 ha exhibido durante su desarrollo para la predicción de propagación de incendios forestales.
+
+## Plot Twist 1: La Trampa de la Cicatriz Estática (El primer Shortcut Learning)
+* **Fecha de Descubrimiento:** Tras las primeras pruebas de entrenamiento base.
+* **El Problema:** El análisis SHAP reveló que el feature `Fire_Mask_T0` (la ignición inicial) tenía una importancia de **0.000000**.
+* **El Comportamiento:** El modelo Transformer, al tener atención global sobre toda la escena 3D, se dio cuenta de que rastrear el crecimiento secuencial del fuego píxel a píxel era "demasiado trabajo matemático". En su lugar, hizo trampa: aprendió a correlacionar fuertes pendientes (`slope_mean`) y matorrales secos (`CLC_current_scrub_proportion`) directamente con el tamaño final de la cicatriz de fuego gigante (`T24`), pintando fuego sobre esas zonas topográficas e ignorando el punto de origen real.
+* **La Solución Propuesta:** Separar la entrada en dos ramas (`x_env` para topografía y `x_fire` para el fuego inicial) y forzar una **Atención Cruzada (Cross-Attention)** en el cuello de botella, donde el Fuego actúa como *Query* interrogando a la Topografía (*Key/Value*).
+
+## Plot Twist 2: El Bypass Residual (La rebelión de la Red)
+* **Fecha de Descubrimiento:** Tras entrenar la arquitectura de Cross-Attention (Alcanzando un asombroso **83.56% de IoU** en Test).
+* **El Problema:** Pese a la altísima precisión, un script de diagnóstico de gradientes (`debug_gradient_flow.py`) reveló que el gradiente para `x_fire` volvía a ser prácticamente nulo, y el SHAP repitió un **0.000000** absoluto para la máscara de fuego. 
+* **El Comportamiento matemático:** En el módulo `CrossAttention3D`, se implementó una conexión residual clásica por buenas prácticas: `return x_env + x`. Como las redes neuronales optimizan por el camino de menor resistencia matemática (mínimos locales más fáciles), la red "desconectó" internamente la pesada matriz de multiplicaciones de Atención Cruzada (`x`) y condujo el 100% de la información directamente a través de la autopista residual pura topográfica (`x_env`). 
+* **¿Cómo sacó 83.56% entonces?:** Las agresivas "Data Augmentations" (rotaciones y flips) implementadas forzaron al modelo a volverse tan extremadamente bueno mapeando "zonas propensas a quemarse" basadas en geografía, que estadísticamente adivinaba la cicatriz final con gran precisión, ¡sin mirar el fuego!
+* **La Decisión Purista (Siguiente Paso):** Destruir la conexión residual. Al eliminar `x_env + x` y devolver únicamente `x` (la atención fusionada), le cortamos la ruta de escape. A partir de ahora, si el modelo no multiplica matemáticamente la geografía por la presencia *real* del fuego inicial, la propagación predictiva colapsará a ceros. Debe aprender las leyes de la propagación física sí o sí.
+* **Resultado del Entrenamiento Purista (Epoch 1):** Inmediatamente después de amputarle la ruta de escape, ejecutamos una evaluación en frío de la Época 1. El Test IoU cayó de inmediato del 83.5% que sacaba haciendo "trampas", a un **79.28%**. Esta abrupta "pérdida de inteligencia" confirma al 100% que la red antes dependía mayoritariamente de adivinanzas topográficas y ahora, ofuscada, tiene que volver a aprender a propagar fluidos térmicos desde una chispa real mediante atención matemática.

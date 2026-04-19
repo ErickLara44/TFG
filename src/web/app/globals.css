@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden; /* Prevent body scroll, layout handles it */
+}
+
+/* Fix for Leaflet controls on top of Sidebar */
+.leaflet-container {
+  z-index: 1;
+}
+
+.leaflet-control-container .leaflet-routing-container,
+.leaflet-control-container .leaflet-bar {
+  z-index: 5 !important;
+}

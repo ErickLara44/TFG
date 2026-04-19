@@ -1,70 +1,52 @@
 from pathlib import Path
 import os
 
-from dotenv import load_dotenv
-from loguru import logger
-
-
-# Load environment variables from .env file if it exists
-load_dotenv()
-
-# Paths
-PROJ_ROOT = Path(__file__).resolve().parents[1]
-logger.info(f"PROJ_ROOT path is: {PROJ_ROOT}")
-
-# Folder paths
-DATA_DIR = PROJ_ROOT / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-INTERIM_DATA_DIR = DATA_DIR / "interim"
-PROCESSED_DATA_DIR = DATA_DIR / "processed"
-EXTERNAL_DATA_DIR = DATA_DIR / "external"
-REPORTS_DIR = PROJ_ROOT / "reports"
-FIGURES_DIR = REPORTS_DIR / "figures"
-OUTPUTS_DIR = PROJ_ROOT / "outputs"
-AEMET_VALIDATION_RESUTLS_DIR = OUTPUTS_DIR / "AEMET_validation_results"
-FIRERISK_MAPS_DIR = OUTPUTS_DIR / "FireRiskMaps"
-VEGETATION_INDICES_FOLDER = os.getenv("VEGETATION_INDICES_FOLDER")
-
-# Specific files paths
-DATACUBE_PATH = os.getenv("DATACUBE_PATH")
-VALIDATION_DATASETS_FOLDER = os.getenv("VALIDATION_DATASETS_FOLDER")
-AEMET_STATIONS_FILE = os.getenv("AEMET_STATIONS_FILE")
-RAILWAYS_GPKG_FILE = os.getenv("RAILWAYS_GPKG_FILE")
-BASE_RASTER_FILE = os.getenv("BASE_RASTER_FILE")
-AUTONOMOUS_COMMUNITIES_FILE = os.getenv("AUTONOMOUS_COMMUNITIES_FILE")
-
-# API KEYS:
-ERA5_API_KEY = os.getenv("ERA5_API_KEY")
-
-
-
-
-
-
-# If tqdm is installed, configure loguru with tqdm.write
-# https://github.com/Delgan/loguru/issues/135
 try:
-    from tqdm import tqdm
+    from loguru import logger
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(handler)
 
-    logger.remove(0)
-    logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
-except ModuleNotFoundError:
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
     pass
 
 # === RUTAS DE ARCHIVOS ===
-PROJECT_ROOT = Path(__file__).parent
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  # src/config.py -> src/ -> PROJECT_ROOT
+
+# Folder paths
 DATA_DIR = PROJECT_ROOT / "data"
-MODELS_DIR = PROJECT_ROOT / "models" 
+MODELS_DIR = PROJECT_ROOT / "models"
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+REPORTS_DIR = PROJECT_ROOT / "reports"
+FIGURES_DIR = REPORTS_DIR / "figures"
 
 # Crear directorios si no existen
-for directory in [DATA_DIR, MODELS_DIR, OUTPUTS_DIR]:
-    directory.mkdir(exist_ok=True)
+for directory in [DATA_DIR, MODELS_DIR, OUTPUTS_DIR, REPORTS_DIR, FIGURES_DIR]:
+    directory.mkdir(parents=True, exist_ok=True)
 
 # Rutas específicas
-DATACUBE_PATH = '/Users/erickmollinedolara/Erick/Uni/TFG/Cursor/iberfire/data/IberFire.nc'
-STATS_PATH = 'iberfire_normalization_stats.pkl'
-MODEL_SAVE_PATH = 'best_spanish_fire_model.pth'
+DATACUBE_PATH = os.getenv("DATACUBE_PATH", str(DATA_DIR / "IberFire.nc"))
+STATS_PATH = DATA_DIR / 'processed' / 'iberfire_normalization_stats.pkl'
+MODEL_SAVE_PATH = PROJECT_ROOT / 'best_robust_ignition_model.pth'
+
+# API KEYS
+ERA5_API_KEY = os.getenv("ERA5_API_KEY")
+
+# Configurar tqdm con loguru si está instalado
+try:
+    from tqdm import tqdm
+    if hasattr(logger, "remove"):
+        logger.remove(0)
+        logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
+except (ModuleNotFoundError, AttributeError):
+    pass
 
 # === PARÁMETROS DEL MODELO ===
 MODEL_CONFIG = {
@@ -76,12 +58,14 @@ MODEL_CONFIG = {
 
 # === PARÁMETROS DE ENTRENAMIENTO ===
 TRAINING_CONFIG = {
-    'batch_size': 17,
-    'epochs': 10,
+    'batch_size': 4,
+    'epochs': 30,
     'learning_rate': 0.001,
     'weight_decay': 0.01,
     'device': 'mps',  # 'mps', 'cuda', o 'cpu'
-    'num_workers': 0
+    'num_workers': 4,
+    'pin_memory': True,
+    'persistent_workers': True
 }
 
 # === PARÁMETROS DEL DATASET ===
@@ -96,23 +80,37 @@ DATASET_CONFIG = {
 }
 
 # === VARIABLES DEL MODELO ===
+# === VARIABLES DEL MODELO ===
 DEFAULT_VARIABLES = {
+    # Static / Topographic
     'elevation_mean': 'static', 
     'slope_mean': 'static', 
-    'CLC_2018_forest_proportion': 'static', 
-    'CLC_2018_scrub_proportion': 'static', 
-    'CLC_2018_agricultural_proportion': 'static', 
     'dist_to_roads_mean': 'static', 
     'popdens_2018': 'static', 
-    'is_waterbody': 'static', 
-    't2m_mean': 'dynamic', 
-    'RH_min': 'dynamic', 
-    'wind_speed_mean': 'dynamic', 
+    
+    # Dynamic Land Cover (Replacing static CLC_2018)
+    'CLC_current_forest_proportion': 'dynamic',
+    'CLC_current_scrub_proportion': 'dynamic',
+    'CLC_current_agricultural_proportion': 'dynamic',
+    
+    # Fire Weather & Physics
+    'hydric_stress': 'dynamic',      # LST - t2m
+    'solar_risk': 'dynamic',         # Aspect * t2m_max
+    'wind_u': 'dynamic',             # East-West Vector
+    'wind_v': 'dynamic',             # North-South Vector
+    'structural_drought': 'dynamic', # SWI Deep - Shallow
+    
+    # Raw Meteorologic (Keep basic ones if needed, but remove redundant)
     'total_precipitation_mean': 'dynamic', 
     'NDVI': 'dynamic', 
-    'SWI_010': 'dynamic', 
-    'FWI': 'dynamic', 
-    'LST': 'dynamic'
+    'FWI': 'dynamic',
+    
+    # Anti-Leakage
+    'is_near_fire_lag1': 'dynamic',  # T-1 neighbor status
+    
+    # Human Factors
+    'is_weekend': 'dynamic',
+    'is_waterbody': 'static',
 }
 
 # === CONFIGURACIÓN DE VISUALIZACIÓN ===
